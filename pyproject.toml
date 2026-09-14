@@ -1,0 +1,12 @@
+[project]
+name = "hermes-voicy"
+version = "0.1.0"
+description = "Audible feedback plugin for Hermes Agent (terminal question/done/error sounds)"
+requires-python = ">=3.10"
+
+# NOTE: this project is a Hermes *directory plugin*, not a pip package.
+# This file exists only for dev tooling (pytest). Never `pip install .`.
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["tests"]

@@ -1,0 +1,10 @@
+name: hermes-voicy
+version: "0.1.0"
+description: "Audible + desktop-tray feedback for the Hermes terminal: sounds and optional notifications when the agent asks a question (clarify/approval) or finishes work; optional error signal. Pure-stdlib synthesis, pluggable backends (paplay/afplay/play/aplay/ffplay/terminal bell, notify-send/osascript)."
+author: "Florence (Hermes Agent)"
+kind: standalone
+provides_hooks:
+  - pre_tool_call
+  - pre_approval_request
+  - post_llm_call
+  - api_request_error
