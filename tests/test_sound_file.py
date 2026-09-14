@@ -2,7 +2,10 @@
 import pathlib
 import tempfile
 
+from conftest import FakePlayer
 from conftest import config as cfgmod
+from conftest import hooks
+from conftest import player as player_mod
 
 
 def _cfg(tmp_path, sounds):
@@ -68,25 +71,8 @@ def test_load_parses_sounds_section(monkeypatch):
 
 def test_tone_path_uses_custom_timeout(monkeypatch):
     """Hooks play user files with the longer custom-song timeout."""
-    import time
-
-    from conftest import hooks
-    from conftest import player as player_mod
-
-    class FakePlayer:
-        def __init__(self):
-            self.played = []
-            self.timeouts = []
-
-        def play_tone(self, wav, backend="auto", bell_allowed=True,
-                      timeout=player_mod.PLAY_TIMEOUT):
-            self.played.append(str(wav))
-            self.timeouts.append(timeout)
-
-        def resolve(self, preference="auto"):
-            return "paplay"
-
     import conftest
+
     fp = FakePlayer()
     monkeypatch.setattr(hooks, "get_player", lambda: fp)
 

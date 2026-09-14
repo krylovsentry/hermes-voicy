@@ -5,8 +5,51 @@ description = "Audible feedback plugin for Hermes Agent (terminal question/done/
 requires-python = ">=3.10"
 
 # NOTE: this project is a Hermes *directory plugin*, not a pip package.
-# This file exists only for dev tooling (pytest). Never `pip install .`.
+# This file exists only for dev tooling (pytest, pylint). Never `pip install .`.
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["tests"]
+
+# ---------------------------------------------------------------------------
+# Pylint (CI: .github/workflows/pylint.yml)
+# ---------------------------------------------------------------------------
+[tool.pylint."messages control"]
+# The repo root is a directory plugin, not a pip package: the loader imports
+# it as `hermes_plugins.hermes_voicy` (ADR-0004), so pylint's default module
+# name check is wrong for the root `__init__.py`.
+module-rgx = "^([a-z_][a-z0-9_]*|__init__)$"
+# Deliberate style of this plugin (see the ADRs):
+#  - hooks.py / player.py / tray.py: lazy, guarded imports keep the plugin
+#    importable outside a Hermes process (tests) and fail soft;
+#  - every callback is defensive (broad-exception-caught) — a sound plugin
+#    must never break the agent loop;
+#  - hook signatures mirror invoke_hook kwargs (many unused by design);
+#  - module-level singletons are reset via `global` in the *_for_tests().
+disable = [
+    "broad-exception-caught",
+    "duplicate-code",
+    "global-statement",
+    "import-outside-toplevel",
+    "invalid-name",
+    "line-too-long",
+    "missing-class-docstring",
+    "missing-function-docstring",
+    "missing-module-docstring",
+    "protected-access",
+    "redefined-outer-name",
+    "too-few-public-methods",
+    "too-many-arguments",
+    "too-many-branches",
+    "too-many-instance-attributes",
+    "too-many-locals",
+    "too-many-positional-arguments",
+    "too-many-return-statements",
+    "too-many-statements",
+    "unused-argument",
+]
+
+[tool.pylint.imports]
+# `yaml` and `hermes_cli.config` are runtime dependencies of the HOST
+# (Hermes), not of this plugin — CI cannot install them.
+ignored-modules = ["yaml", "hermes_cli", "hermes_cli.config"]

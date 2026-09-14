@@ -1,5 +1,4 @@
 """Tray channel tests: config resolution, notifier, hook fan-out."""
-import conftest
 from conftest import config as cfgmod
 from conftest import hooks, tray
 
@@ -29,7 +28,6 @@ def _cfg(tray_dict=None, sound=True, question=True, done=True, error=True):
 
 def _install(monkeypatch, cfg, fake_player=None):
     monkeypatch.setattr(cfgmod, "load", lambda: cfg)
-    from conftest import player as player_mod
     if fake_player is None:
         class FP:
             played = []
@@ -73,13 +71,13 @@ def test_sound_master_off_still_trays(monkeypatch):
     fn, fp = _install(monkeypatch, _cfg(tray_dict=TRAY_ON, sound=False))
     hooks.on_post_llm_call(assistant_response="Готово.")
     assert fn.fired, "tray must fire even when sound master is off"
-    assert fp.played == []
+    assert not fp.played
 
 
 def test_tray_off_no_notifications(monkeypatch):
     fn, fp = _install(monkeypatch, _cfg(tray_dict=None))
     hooks.on_pre_tool_call(tool_name="clarify", args={"question": "?"})
-    assert fn.fired == []
+    assert not fn.fired
     assert len(fp.played) == 1  # sound still plays
 
 
@@ -87,7 +85,6 @@ def test_leftover_desktop_key_ignored(monkeypatch):
     # Regression: `tray.desktop` was removed (click-to-activate activated
     # the wrong session on GNOME). A leftover key in config.yaml must not
     # leak into the resolved tray dict.
-    from conftest import config as cfgmod
     monkeypatch.setattr(cfgmod, "_top_section", lambda name: {
         "desktop": "org.gnome.Terminal",
     } if name == "tray" else {})
@@ -98,8 +95,8 @@ def test_disabled_event_no_tray(monkeypatch):
     fn, fp = _install(monkeypatch,
                       _cfg(tray_dict=TRAY_ON, done=False))
     hooks.on_post_llm_call(assistant_response="x")
-    assert fn.fired == []
-    assert fp.played == []
+    assert not fn.fired
+    assert not fp.played
 
 
 def test_body_truncated_to_body_max(monkeypatch):
@@ -123,7 +120,7 @@ def test_error_event_tray(monkeypatch):
     # retryable with retries left: silent on both channels
     fn.fired.clear()
     hooks.on_api_request_error(retryable=True, retry_count=1, max_retries=3)
-    assert fn.fired == []
+    assert not fn.fired
 
 
 # ---------------------------------------------------------------------------
@@ -162,6 +159,6 @@ def test_fire_never_raises_without_backend(monkeypatch):
     monkeypatch.setattr(tray.subprocess, "run", fake_run)
     n = tray.TrayNotifier()
     n.fire("T", "B")  # must be a silent no-op (no backend resolved)
-    assert calls == []
+    assert not calls
     n._send_sync("T", "B", "normal", "notify-send")  # wedged: no raise
     assert len(calls) == 1  # reached subprocess, fake consumed it

@@ -35,3 +35,19 @@ player = importlib.import_module(f"{MODULE_NAME}.player")
 hooks = importlib.import_module(f"{MODULE_NAME}.hooks")
 presets = importlib.import_module(f"{MODULE_NAME}.presets")
 tray = importlib.import_module(f"{MODULE_NAME}.tray")
+
+
+class FakePlayer:
+    """Shared test double: records play_tone() calls synchronously."""
+
+    def __init__(self):
+        self.played = []
+        self.timeouts = []
+
+    def play_tone(self, wav, backend="auto", bell_allowed=True,
+                  timeout=player.PLAY_TIMEOUT):
+        self.played.append(str(wav))
+        self.timeouts.append(timeout)
+
+    def resolve(self, preference="auto"):
+        return "paplay"

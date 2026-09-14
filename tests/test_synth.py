@@ -1,4 +1,5 @@
-import math
+"""Synth tests: recipe validation, WAV rendering, waveforms, glide."""
+import io
 import struct
 import wave
 
@@ -44,7 +45,7 @@ def test_render_wav_is_valid_and_quiet_volume_is_silent():
     r = synth.Recipe.from_list([(440.0, 50)])
     data = synth.render_wav(r, volume=0.8)
     # parse header
-    with wave.open(__import__("io").BytesIO(data), "rb") as w:
+    with wave.open(io.BytesIO(data), "rb") as w:
         assert w.getnchannels() == 1
         assert w.getsampwidth() == 2
         assert w.getframerate() == 22050
@@ -70,7 +71,6 @@ def test_tone_path_caches(tmp_path, monkeypatch):
 
 
 def _peak(data: bytes) -> int:
-    import io
     with wave.open(io.BytesIO(data), "rb") as w:
         frames = w.readframes(w.getnframes())
     return max(abs(s) for s in struct.unpack(f"<{len(frames) // 2}h", frames))
@@ -136,7 +136,6 @@ def test_glide_note_shape():
 
 def test_glide_sweeps_frequency():
     def crossings(note):
-        import io
         data = synth.render_wav(synth.Recipe.from_list([note]), 1.0)
         with wave.open(io.BytesIO(data), "rb") as w:
             frames = w.readframes(w.getnframes())
@@ -164,7 +163,6 @@ def test_held_envelope_sustains_full_scale():
     # Middle of a "held" note should be near full gain (no decay to zero).
     r = synth.Recipe.from_list([(440.0, 200, "square", "held")])
     data = synth.render_wav(r, 1.0)
-    import io
     with wave.open(io.BytesIO(data), "rb") as w:
         total = w.getnframes()
         frames = w.readframes(total)

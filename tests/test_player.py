@@ -1,4 +1,5 @@
-import subprocess
+"""Player backend resolution, demotion and async dispatch."""
+import time
 
 from conftest import player
 
@@ -30,7 +31,7 @@ def test_play_tone_dispatches_to_subprocess(monkeypatch):
     p = player.get_player()
     calls = []
 
-    def fake_run(cmd, **kw):
+    def fake_run(cmd, **_):
         calls.append(cmd)
         class R:
             returncode = 0
@@ -43,7 +44,6 @@ def test_play_tone_dispatches_to_subprocess(monkeypatch):
 
     p.play_tone("/tmp/fake.wav", "auto")
     # wait for the worker thread
-    import time
     for _ in range(50):
         if calls:
             break
@@ -57,7 +57,7 @@ def test_failed_backend_demotes(monkeypatch):
     monkeypatch.setattr(player.shutil, "which", lambda b: "/usr/bin/" + b if b in {"paplay", "aplay"} else None)
     calls = []
 
-    def fake_run(*a, **k):
+    def fake_run(*a, **_):
         calls.append(a[0][0])
         raise TimeoutError("x")
 
