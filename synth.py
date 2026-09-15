@@ -83,13 +83,14 @@ class Note:
     glide_to: Optional[float] = None  # linear pitch bend target; None = fixed
 
     def __post_init__(self) -> None:
-        if not (MIN_FREQ_HZ <= self.freq <= MAX_FREQ_HZ):
+        if not MIN_FREQ_HZ <= self.freq <= MAX_FREQ_HZ:
             raise ValueError(f"frequency {self.freq} Hz out of range")
-        if not (20 <= self.ms <= MAX_NOTE_MS):
+        if not 20 <= self.ms <= MAX_NOTE_MS:
             raise ValueError(f"duration {self.ms} ms out of range")
         _norm_wave(self.waveform)
         _norm_env(self.envelope)
-        if self.glide_to is not None and not (MIN_FREQ_HZ <= self.glide_to <= MAX_FREQ_HZ):
+        if (self.glide_to is not None
+                and not MIN_FREQ_HZ <= self.glide_to <= MAX_FREQ_HZ):
             raise ValueError(f"glide target {self.glide_to} Hz out of range")
 
 

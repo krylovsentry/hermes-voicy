@@ -1,6 +1,4 @@
 """Retro preset bank tests: shapes, resolution, override dressing."""
-import math
-
 from conftest import presets, synth
 
 

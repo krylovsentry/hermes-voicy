@@ -18,7 +18,7 @@ def pytest_configure(config):
     def setup(self):
         try:
             if self.path is not None and os.path.samefile(self.path, root):
-                return  # repo root == plugin package: not a test package
+                return None  # repo root == plugin package: not a test package
         except (OSError, TypeError):
             pass
         return orig(self)

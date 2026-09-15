@@ -1,27 +1,14 @@
 """Hook-level tests: event -> tone mapping with a stubbed player."""
-import time
+import conftest
 
-from conftest import hooks, player
-
-
-class FakePlayer:
-    def __init__(self):
-        self.played = []
-        self.timeouts = []
-
-    def play_tone(self, wav, backend="auto", bell_allowed=True, timeout=player.PLAY_TIMEOUT):
-        self.played.append(str(wav))
-        self.timeouts.append(timeout)
-
-    def resolve(self, preference="auto"):
-        return "paplay"
+from conftest import FakePlayer
+from conftest import hooks
 
 
 def _install_fake(monkeypatch):
     fp = FakePlayer()
     monkeypatch.setattr(hooks, "get_player", lambda: fp)
     # force question/done/error all on, volume fixed
-    import conftest
     fake_cfg = conftest.config.VoicyConfig(
         enabled=True, question=True, done=True, error=True,
         volume=0.5, backend="paplay", bell=True,
@@ -32,12 +19,6 @@ def _install_fake(monkeypatch):
     )
     monkeypatch.setattr(conftest.config, "load", lambda: fake_cfg)
     return fp
-
-
-def _wait(fp):
-    # play_tone is async via the real player; the fake records synchronously,
-    # but _play() calls get_player().play_tone directly, so no wait needed.
-    time.sleep(0.01)
 
 
 def test_clarify_fires_question(monkeypatch):
@@ -67,7 +48,7 @@ def test_api_error_only_on_terminal_failure(monkeypatch):
     fp = _install_fake(monkeypatch)
     # retryable, retries left -> silent
     hooks.on_api_request_error(retryable=True, retry_count=1, max_retries=3)
-    assert fp.played == []
+    assert not fp.played
     # retries exhausted -> sound
     hooks.on_api_request_error(retryable=True, retry_count=3, max_retries=3)
     assert len(fp.played) == 1 and "error" in fp.played[0]
@@ -77,7 +58,6 @@ def test_api_error_only_on_terminal_failure(monkeypatch):
 
 
 def test_disabled_events_stay_silent(monkeypatch):
-    import conftest
     fake_cfg = conftest.config.VoicyConfig(
         enabled=True, question=False, done=True, error=False,
         volume=0.5, backend="paplay", bell=True,
@@ -91,6 +71,6 @@ def test_disabled_events_stay_silent(monkeypatch):
     monkeypatch.setattr(hooks, "get_player", lambda: fp)
     hooks.on_pre_tool_call(tool_name="clarify", args={})
     hooks.on_api_request_error(retryable=False)
-    assert fp.played == []
+    assert not fp.played
     hooks.on_post_llm_call(session_id="s1")
     assert len(fp.played) == 1
