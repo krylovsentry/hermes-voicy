@@ -50,6 +50,10 @@ disable = [
 ]
 
 [tool.pylint.imports]
-# `yaml` and `hermes_cli.config` are runtime dependencies of the HOST
-# (Hermes), not of this plugin — CI cannot install them.
-ignored-modules = ["yaml", "hermes_cli", "hermes_cli.config"]
+# These are dependencies of the HOST (Hermes) or of the dev/test env, not
+# of this plugin — CI only installs pylint, so they must be ignored:
+#   yaml, hermes_cli*  -> host runtime deps (read in config.py)
+#   pytest, _pytest*   -> the root conftest.py monkeypatches pytest's
+#                         Package.setup (only meaningful when pytest is present)
+ignored-modules = ["yaml", "hermes_cli", "hermes_cli.config",
+                   "pytest", "_pytest", "_pytest.python"]
